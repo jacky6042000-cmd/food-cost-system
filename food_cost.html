@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>食材成本管理系統</title>
+
+<style>
+body{
+    font-family:Microsoft JhengHei,sans-serif;
+    background:#fff;
+    color:#000;
+    max-width:1200px;
+    margin:auto;
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+}
+
+.card{
+    border:1px solid #ccc;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+input,select{
+    width:100%;
+    padding:8px;
+    margin:5px 0 10px;
+    box-sizing:border-box;
+}
+
+button{
+    padding:10px 20px;
+    background:#000;
+    color:#fff;
+    border:none;
+    cursor:pointer;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:20px;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:8px;
+    text-align:center;
+}
+
+th{
+    background:#f5f5f5;
+}
+
+.deleteBtn{
+    background:red;
+    color:white;
+    padding:5px 10px;
+}
+
+@media(max-width:768px){
+    table{
+        font-size:12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>食材成本管理系統</h1>
+
+<div class="card">
+
+<label>食材名稱</label>
+<input type="text" id="name">
+
+<label>計價單位</label>
+<select id="unit">
+    <option value="kg">公斤</option>
+    <option value="box">箱</option>
+</select>
+
+<label>進貨單價(元)</label>
+<input type="number" id="price">
+
+<label>重量(kg)</label>
+<input type="number" id="weight">
+
+<label>製成率(%)</label>
+<input type="number" id="yield" value="100">
+
+<button onclick="addIngredient()">新增食材</button>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th>食材</th>
+<th>單位</th>
+<th>單價</th>
+<th>重量kg</th>
+<th>製成率%</th>
+<th>可用重量kg</th>
+<th>每公斤成本</th>
+<th>每公克成本</th>
+<th>刪除</th>
+</tr>
+</thead>
+
+<tbody id="ingredientTable"></tbody>
+
+</table>
+
+<script>
+
+let ingredients =
+JSON.parse(localStorage.getItem("ingredients")) || [];
+
+function saveData(){
+    localStorage.setItem(
+        "ingredients",
+        JSON.stringify(ingredients)
+    );
+}
+
+function renderTable(){
+
+    let html="";
+
+    ingredients.forEach((item,index)=>{
+
+        html += `
+        <tr>
+            <td>${item.name}</td>
+            <td>${item.unit}</td>
+            <td>${item.price}</td>
+            <td>${item.weight}</td>
+            <td>${item.yieldRate}</td>
+            <td>${item.usableWeight}</td>
+            <td>${item.costPerKg}</td>
+            <td>${item.costPerGram}</td>
+            <td>
+                <button class="deleteBtn"
+                onclick="deleteItem(${index})">
+                刪除
+                </button>
+            </td>
+        </tr>`;
+    });
+
+    document.getElementById("ingredientTable").innerHTML =
+    html;
+}
+
+function addIngredient(){
+
+    let name=document.getElementById("name").value;
+
+    let unit=document.getElementById("unit").value;
+
+    let price=parseFloat(
+        document.getElementById("price").value
+    );
+
+    let weight=parseFloat(
+        document.getElementById("weight").value
+    );
+
+    let yieldRate=parseFloat(
+        document.getElementById("yield").value
+    );
+
+    if(!name || !price || !weight){
+        alert("請完整輸入資料");
+        return;
+    }
+
+    let totalCost =
+        unit==="kg"
+        ? price*weight
+        : price;
+
+    let usableWeight =
+        weight*(yieldRate/100);
+
+    let costPerKg =
+        totalCost/usableWeight;
+
+    let costPerGram =
+        costPerKg/1000;
+
+    ingredients.push({
+
+        name:name,
+
+        unit:
+        unit==="kg"
+        ? "公斤"
+        : "箱",
+
+        price:price.toFixed(0),
+
+        weight:weight.toFixed(2),
+
+        yieldRate:yieldRate.toFixed(0),
+
+        usableWeight:
+        usableWeight.toFixed(2),
+
+        costPerKg:
+        costPerKg.toFixed(2),
+
+        costPerGram:
+        costPerGram.toFixed(2)
+
+    });
+
+    saveData();
+    renderTable();
+
+    document.getElementById("name").value="";
+    document.getElementById("price").value="";
+    document.getElementById("weight").value="";
+}
+
+function deleteItem(index){
+
+    if(confirm("確認刪除？")){
+
+        ingredients.splice(index,1);
+
+        saveData();
+
+        renderTable();
+    }
+}
+
+renderTable();
+
+</script>
+
+</body>
+</html>
